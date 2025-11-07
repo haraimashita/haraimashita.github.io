@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareUrlInput = document.getElementById('share-url');
     const copyUrlBtn = document.getElementById('copy-url-btn');
     const createAnotherEventBtn = document.getElementById('create-another-event-btn');
+    const createNewEventFromDetailsBtn = document.getElementById('create-new-event-from-details');
     const addPaymentForm = document.getElementById('add-payment-form');
     const paymentsTbody = document.getElementById('payments-tbody');
     
@@ -23,9 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- イベントリスナー ---
-    createAnotherEventBtn.addEventListener('click', () => {
-        window.location.href = window.location.pathname; // URLのハッシュを消してリロード
-    });
+    const backToHome = () => {
+        window.open(window.location.pathname, '_blank');
+    };
+
+    createAnotherEventBtn.addEventListener('click', backToHome);
+    createNewEventFromDetailsBtn.addEventListener('click', backToHome);
 
     // イベント作成フォームの処理
     createEventForm.addEventListener('submit', (e) => {

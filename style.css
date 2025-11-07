@@ -54,6 +54,16 @@ header {
     align-items: center;
     gap: 10px;
 }
+.header-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.app-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color);
+}
 .app-icon {
     width: 40px;
     height: 40px;
@@ -299,4 +309,13 @@ footer {
     .form-actions button:first-child {
         margin-bottom: 10px;
     }
+}
+
+#create-new-event-from-details {
+    display: block;
+    width: 100%;
+    max-width: 400px;
+    margin: 30px auto 10px;
+    position: relative;
+    z-index: 10;
 }

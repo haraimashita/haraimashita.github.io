@@ -1,16 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-1ZFPY6456X"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-1ZFPY6456X');
-</script>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ハライマシタ</title>
@@ -78,7 +68,10 @@
         <!-- イベント詳細・支払い画面 -->
         <div id="event-details-screen" class="screen">
             <header>
-                <svg class="app-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="20" fill="#28a745"/><polyline points="25,50 45,70 75,30" fill="none" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div class="header-main">
+                    <svg class="app-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="20" fill="#28a745"/><polyline points="25,50 45,70 75,30" fill="none" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span class="app-title">ハライマシタ</span>
+                </div>
                 <h2 id="event-title-display"></h2>
                 <p id="event-date-display"></p>
                 <div id="event-comment-display" class="event-comment-display" style="display: none;"></div>
@@ -151,6 +144,8 @@
                         <button type="submit" class="btn btn-primary btn-large">ハライマシタ！</button>
                     </form>
                 </div>
+
+                <button type="button" id="create-new-event-from-details" class="btn btn-secondary">新しいイベントを作成する</button>
             </main>
         </div>
     </div>
