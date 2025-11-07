@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ハライマシタ</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- イベント作成画面 -->
+        <div id="create-event-screen" class="screen">
+            <header>
+                <svg class="app-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="20" fill="#28a745"/><polyline points="25,50 45,70 75,30" fill="none" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <h1>ハライマシタ</h1>
+                <p>ハライマシタはURLをメンバーに送るだけで、イベントの支払をスマートに管理できるツールです</p>
+            </header>
+            <main>
+                <form id="create-event-form">
+                    <h2>イベント作成</h2>
+                    <div class="form-group">
+                        <label for="event-title">タイトル</label>
+                        <input type="text" id="event-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-date">日付</label>
+                        <input type="date" id="event-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-participants">人数</label>
+                        <input type="number" id="event-participants" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-total-amount">合計金額</label>
+                        <input type="number" id="event-total-amount" min="0" step="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-comment">コメント (任意)</label>
+                        <textarea id="event-comment" rows="3" placeholder="例：１人〇〇円お願いします"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-large">共有リンク作成</button>
+                    </div>
+                </form>
+            </main>
+        </div>
+
+        <!-- 共有リンク画面 -->
+        <div id="share-screen" class="screen">
+            <header>
+                <svg class="app-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="20" fill="#28a745"/><polyline points="25,50 45,70 75,30" fill="none" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <h2>共有リンクが作成されました</h2>
+            </header>
+            <main>
+                <p>このリンクを参加者に共有してください。</p>
+                <div class="share-link-wrapper">
+                    <input type="text" id="share-url" readonly>
+                    <button id="copy-url-btn" class="btn">コピー</button>
+                </div>
+                <button id="create-another-event-btn" class="btn btn-secondary">別のイベントを作成</button>
+            </main>
+        </div>
+
+        <!-- イベント詳細・支払い画面 -->
+        <div id="event-details-screen" class="screen">
+            <header>
+                <svg class="app-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="20" fill="#28a745"/><polyline points="25,50 45,70 75,30" fill="none" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <h2 id="event-title-display"></h2>
+                <p id="event-date-display"></p>
+                <div id="event-comment-display" class="event-comment-display" style="display: none;"></div>
+            </header>
+            <main>
+                <div class="summary-card">
+                    <h3>イベント概要</h3>
+                    <table class="summary-table">
+                        <tr>
+                            <th>合計人数</th>
+                            <td id="summary-participants"></td>
+                        </tr>
+                        <tr>
+                            <th>合計金額</th>
+                            <td id="summary-total-amount"></td>
+                        </tr>
+                        <tr>
+                            <th>支払い済合計</th>
+                            <td id="summary-paid-amount"></td>
+                        </tr>
+                        <tr class="remaining-row">
+                            <th>残額</th>
+                            <td id="summary-remaining-amount"></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="payment-list-card">
+                    <h3>支払い状況</h3>
+                    <div class="table-wrapper">
+                        <table id="payments-table">
+                            <thead>
+                                <tr>
+                                    <th>名前</th>
+                                    <th>金額</th>
+                                    <th>支払い方法</th>
+                                    <th>コメント</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payments-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="add-payment-card">
+                    <h3>支払いを記録する</h3>
+                    <form id="add-payment-form">
+                        <div class="form-group">
+                            <label for="participant-name">名前</label>
+                            <input type="text" id="participant-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="payment-amount">金額</label>
+                            <input type="number" id="payment-amount" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="payment-method">支払い方法</label>
+                            <select id="payment-method" required>
+                                <option value="現金">現金</option>
+                                <option value="QRコード決済">QRコード決済</option>
+                                <option value="銀行振込">銀行振込</option>
+                                <option value="その他">その他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="payment-comment">コメント (任意)</label>
+                            <textarea id="payment-comment" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large">ハライマシタ！</button>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 編集用モーダル -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3>支払いを編集</h3>
+            <form id="edit-payment-form">
+                <input type="hidden" id="edit-payment-id">
+                <div class="form-group">
+                    <label for="edit-participant-name">名前</label>
+                    <input type="text" id="edit-participant-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-payment-amount">金額</label>
+                    <input type="number" id="edit-payment-amount" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-payment-method">支払い方法</label>
+                    <select id="edit-payment-method" required>
+                        <option value="現金">現金</option>
+                        <option value="QRコード決済">QRコード決済</option>
+                        <option value="銀行振込">銀行振込</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-payment-comment">コメント (任意)</label>
+                    <textarea id="edit-payment-comment" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        © Kazutoshi Senoo Architect All Rights Reserved.
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
