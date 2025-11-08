@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createEventForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const eventData = {
+            id: Date.now(), // ユニークIDを付与
             title: document.getElementById('event-title').value,
             date: document.getElementById('event-date').value,
             participants: document.getElementById('event-participants').value,
@@ -120,7 +121,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- データ処理 & 描画 ---
-    const getStorageKey = (eventData) => `payments_${eventData.title}_${eventData.date}`;
+    const getStorageKey = (eventData) => {
+        if (eventData.id) {
+            // 新しい形式：IDベースのキー
+            return `payments_${eventData.id}`;
+        }
+        // 古い形式：後方互換性のためのフォールバック
+        return `payments_${eventData.title}_${eventData.date}`;
+    };
     const getPayments = (key) => JSON.parse(localStorage.getItem(key) || '[]');
     const savePayments = (key, payments) => localStorage.setItem(key, JSON.stringify(payments));
 
