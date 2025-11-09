@@ -1,4 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Firebaseの初期化 ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyB3NwVo4M2l-yRyIcJSjZGRs3tB6exITng",
+        authDomain: "haraimashita.firebaseapp.com",
+        projectId: "haraimashita",
+        storageBucket: "haraimashita.firebasestorage.app",
+        messagingSenderId: "913746709279",
+        appId: "1:913746709279:web:4a0fcf1677624ace147e2a",
+        measurementId: "G-9WQJFCPLDZ"
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     // --- DOM要素の取得 ---
     const screens = document.querySelectorAll('.screen');
     const createEventForm = document.getElementById('create-event-form');
@@ -15,7 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.querySelector('.close-btn');
     const editPaymentId = document.getElementById('edit-payment-id');
 
+    let currentEventId = null;
     let currentEventData = null;
+    let paymentsUnsubscribe = null; // リアルタイムリスナーの購読を解除するための変数
 
     // --- 画面切り替え ---
     const showScreen = (screenId) => {
@@ -31,21 +46,27 @@ document.addEventListener('DOMContentLoaded', () => {
     createAnotherEventBtn.addEventListener('click', backToHome);
     createNewEventFromDetailsBtn.addEventListener('click', backToHome);
 
-    // イベント作成フォームの処理
-    createEventForm.addEventListener('submit', (e) => {
+    // イベント作成フォームの処理 (Firebase対応)
+    createEventForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const eventData = {
-            id: Date.now(), // ユニークIDを付与
             title: document.getElementById('event-title').value,
             date: document.getElementById('event-date').value,
             participants: document.getElementById('event-participants').value,
             totalAmount: document.getElementById('event-total-amount').value,
             comment: document.getElementById('event-comment').value,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        const encodedData = btoa(unescape(encodeURIComponent(JSON.stringify(eventData))));
-        const url = `${window.location.origin}${window.location.pathname}#${encodedData}`;
-        shareUrlInput.value = url;
-        showScreen('share-screen');
+        
+        try {
+            const docRef = await db.collection('events').add(eventData);
+            const url = `${window.location.origin}${window.location.pathname}#${docRef.id}`;
+            shareUrlInput.value = url;
+            showScreen('share-screen');
+        } catch (error) {
+            console.error("イベントの作成に失敗しました:", error);
+            alert("エラーが発生しました。イベントを作成できませんでした。");
+        }
     });
 
     // URLコピー処理
@@ -57,28 +78,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 支払い追加フォームの処理
+    // 支払い追加フォームの処理 (Firebase対応)
     addPaymentForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        if (!currentEventData) return;
+        if (!currentEventId) return;
         const newPayment = {
             name: document.getElementById('participant-name').value,
             amount: parseInt(document.getElementById('payment-amount').value, 10),
             method: document.getElementById('payment-method').value,
             comment: document.getElementById('payment-comment').value,
-            id: Date.now()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        const storageKey = getStorageKey(currentEventData);
-        const payments = getPayments(storageKey);
-        payments.push(newPayment);
-        saveAndRerender(storageKey, payments);
-        addPaymentForm.reset();
+        
+        db.collection('events').doc(currentEventId).collection('payments').add(newPayment)
+            .then(() => {
+                addPaymentForm.reset();
+            })
+            .catch(error => {
+                console.error("支払いの追加に失敗しました:", error);
+                alert("エラーが発生しました。支払いを追加できませんでした。");
+            });
     });
 
     // 支払いリストのクリックイベント（編集・削除）
     paymentsTbody.addEventListener('click', (e) => {
         const target = e.target;
-        const paymentId = parseInt(target.closest('tr')?.dataset.id, 10);
+        const paymentId = target.closest('tr')?.dataset.id;
         if (!paymentId) return;
 
         if (target.classList.contains('edit-btn')) {
@@ -96,70 +121,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 編集フォームの保存処理
+    // 編集フォームの保存処理 (Firebase対応)
     editPaymentForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const paymentId = parseInt(editPaymentId.value, 10);
-        const storageKey = getStorageKey(currentEventData);
-        let payments = getPayments(storageKey);
-        
-        payments = payments.map(p => {
-            if (p.id === paymentId) {
-                return {
-                    ...p,
-                    name: document.getElementById('edit-participant-name').value,
-                    amount: parseInt(document.getElementById('edit-payment-amount').value, 10),
-                    method: document.getElementById('edit-payment-method').value,
-                    comment: document.getElementById('edit-payment-comment').value,
-                };
-            }
-            return p;
-        });
+        const paymentId = editPaymentId.value;
+        if (!currentEventId || !paymentId) return;
 
-        saveAndRerender(storageKey, payments);
-        editModal.style.display = 'none';
+        const updatedPayment = {
+            name: document.getElementById('edit-participant-name').value,
+            amount: parseInt(document.getElementById('edit-payment-amount').value, 10),
+            method: document.getElementById('edit-payment-method').value,
+            comment: document.getElementById('edit-payment-comment').value,
+        };
+
+        db.collection('events').doc(currentEventId).collection('payments').doc(paymentId).update(updatedPayment)
+            .then(() => {
+                editModal.style.display = 'none';
+            })
+            .catch(error => {
+                console.error("支払いの更新に失敗しました:", error);
+                alert("エラーが発生しました。支払いを更新できませんでした。");
+            });
     });
 
-    // --- データ処理 & 描画 ---
-    const getStorageKey = (eventData) => {
-        if (eventData.id) {
-            // 新しい形式：IDベースのキー
-            return `payments_${eventData.id}`;
-        }
-        // 古い形式：後方互換性のためのフォールバック
-        return `payments_${eventData.title}_${eventData.date}`;
-    };
-    const getPayments = (key) => JSON.parse(localStorage.getItem(key) || '[]');
-    const savePayments = (key, payments) => localStorage.setItem(key, JSON.stringify(payments));
-
-    const saveAndRerender = (storageKey, payments) => {
-        savePayments(storageKey, payments);
-        renderPayments(payments);
-        updateSummary(currentEventData, payments);
-    };
+    // --- データ処理 & 描画 (Firebase対応) ---
 
     const openEditModal = (paymentId) => {
-        const storageKey = getStorageKey(currentEventData);
-        const payments = getPayments(storageKey);
-        const payment = payments.find(p => p.id === paymentId);
-        if (!payment) return;
-
-        editPaymentId.value = payment.id;
-        document.getElementById('edit-participant-name').value = payment.name;
-        document.getElementById('edit-payment-amount').value = payment.amount;
-        document.getElementById('edit-payment-method').value = payment.method;
-        document.getElementById('edit-payment-comment').value = payment.comment;
-        
-        editModal.style.display = 'block';
+        db.collection('events').doc(currentEventId).collection('payments').doc(paymentId).get()
+            .then(doc => {
+                if (!doc.exists) return;
+                const payment = doc.data();
+                
+                editPaymentId.value = doc.id;
+                document.getElementById('edit-participant-name').value = payment.name;
+                document.getElementById('edit-payment-amount').value = payment.amount;
+                document.getElementById('edit-payment-method').value = payment.method;
+                document.getElementById('edit-payment-comment').value = payment.comment;
+                
+                editModal.style.display = 'block';
+            });
     };
 
     const deletePayment = (paymentId) => {
         if (!confirm('この支払いを削除しますか？')) return;
         
-        const storageKey = getStorageKey(currentEventData);
-        let payments = getPayments(storageKey);
-        payments = payments.filter(p => p.id !== paymentId);
-        saveAndRerender(storageKey, payments);
+        db.collection('events').doc(currentEventId).collection('payments').doc(paymentId).delete()
+            .catch(error => {
+                console.error("支払いの削除に失敗しました:", error);
+                alert("エラーが発生しました。支払いを削除できませんでした。");
+            });
     };
 
     const renderPayments = (payments) => {
@@ -202,40 +212,87 @@ document.addEventListener('DOMContentLoaded', () => {
             remainingAmountEl.style.color = 'var(--danger-color)';
         }
     };
+
+    const renderPaymentMethodTotals = (payments) => {
+        const totalsByMethodCard = document.getElementById('totals-by-method-card');
+        const totalsTable = document.getElementById('totals-by-method-table');
+        
+        if (payments.length === 0) {
+            totalsByMethodCard.style.display = 'none';
+            return;
+        }
+
+        const totals = payments.reduce((acc, p) => {
+            if (!acc[p.method]) {
+                acc[p.method] = 0;
+            }
+            acc[p.method] += p.amount;
+            return acc;
+        }, {});
+
+        totalsTable.innerHTML = '';
+        for (const method in totals) {
+            const row = `
+                <tr>
+                    <th>${escapeHTML(method)}</th>
+                    <td>${totals[method].toLocaleString()}円</td>
+                </tr>
+            `;
+            totalsTable.innerHTML += row;
+        }
+        
+        totalsByMethodCard.style.display = 'block';
+    };
     
     const escapeHTML = (str) => {
         if (!str) return '';
         return str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]);
     };
 
-    // --- 初期化処理 ---
+    // --- 初期化処理 (Firebase対応) ---
     const init = () => {
-        const hash = window.location.hash.substring(1);
-        if (hash) {
-            try {
-                const decodedData = decodeURIComponent(escape(atob(hash)));
-                currentEventData = JSON.parse(decodedData);
-                document.getElementById('event-title-display').textContent = currentEventData.title;
-                document.getElementById('event-date-display').textContent = `開催日: ${currentEventData.date}`;
-                
-                // イベントコメントの表示
-                const commentDisplay = document.getElementById('event-comment-display');
-                if (currentEventData.comment) {
-                    commentDisplay.textContent = currentEventData.comment;
-                    commentDisplay.style.display = 'block';
-                } else {
-                    commentDisplay.style.display = 'none';
-                }
+        const eventId = window.location.hash.substring(1);
+        if (eventId) {
+            currentEventId = eventId;
+            
+            // イベントデータを取得
+            db.collection('events').doc(eventId).get().then(doc => {
+                if (doc.exists) {
+                    currentEventData = doc.data();
+                    document.getElementById('event-title-display').textContent = currentEventData.title;
+                    document.getElementById('event-date-display').textContent = `開催日: ${currentEventData.date}`;
+                    
+                    const commentDisplay = document.getElementById('event-comment-display');
+                    if (currentEventData.comment) {
+                        commentDisplay.textContent = currentEventData.comment;
+                        commentDisplay.style.display = 'block';
+                    } else {
+                        commentDisplay.style.display = 'none';
+                    }
 
-                const storageKey = getStorageKey(currentEventData);
-                const payments = getPayments(storageKey);
-                renderPayments(payments);
-                updateSummary(currentEventData, payments);
-                showScreen('event-details-screen');
-            } catch (e) {
-                console.error("URLデータの解析に失敗しました:", e);
+                    // 支払い情報をリアルタイムで購読
+                    if (paymentsUnsubscribe) paymentsUnsubscribe(); // 既存のリスナーを解除
+                    paymentsUnsubscribe = db.collection('events').doc(eventId).collection('payments')
+                        .orderBy('createdAt', 'desc')
+                        .onSnapshot(snapshot => {
+                            const payments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            renderPayments(payments);
+                            updateSummary(currentEventData, payments);
+                            renderPaymentMethodTotals(payments);
+                        }, error => {
+                            console.error("支払い情報の取得に失敗しました:", error);
+                        });
+
+                    showScreen('event-details-screen');
+                } else {
+                    console.error("指定されたイベントが見つかりません。");
+                    alert("エラー: 指定されたイベントが見つかりません。");
+                    showScreen('create-event-screen');
+                }
+            }).catch(error => {
+                console.error("イベントデータの取得に失敗しました:", error);
                 showScreen('create-event-screen');
-            }
+            });
         } else {
             showScreen('create-event-screen');
         }
