@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const createEventForm = document.getElementById('create-event-form');
     const shareUrlInput = document.getElementById('share-url');
     const copyUrlBtn = document.getElementById('copy-url-btn');
+    const checkPaymentStatusBtn = document.getElementById('check-payment-status-btn'); // 追加
     const createAnotherEventBtn = document.getElementById('create-another-event-btn');
     const createNewEventFromDetailsBtn = document.getElementById('create-new-event-from-details');
     const addPaymentForm = document.getElementById('add-payment-form');
@@ -76,6 +77,14 @@ document.addEventListener('DOMContentLoaded', () => {
             copyUrlBtn.textContent = 'コピー完了！';
             setTimeout(() => { copyUrlBtn.textContent = 'コピー'; }, 2000);
         });
+    });
+
+    // 支払状況確認ボタンの処理
+    checkPaymentStatusBtn.addEventListener('click', () => {
+        const url = shareUrlInput.value;
+        if (url) {
+            window.open(url, '_blank');
+        }
     });
 
     // 支払い追加フォームの処理 (Firebase対応)
