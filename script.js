@@ -185,13 +185,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderPayments = (payments) => {
         paymentsTbody.innerHTML = '';
         if (payments.length === 0) {
-            paymentsTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">まだ支払いがありません</td></tr>';
+            paymentsTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">まだ支払いがありません</td></tr>';
             return;
         }
-        payments.forEach(p => {
+        payments.forEach((p, index) => {
             const tr = document.createElement('tr');
             tr.dataset.id = p.id;
             tr.innerHTML = `
+                <td>${index + 1}</td>
                 <td>${escapeHTML(p.name)}</td>
                 <td>${p.amount.toLocaleString()}円</td>
                 <td>${escapeHTML(p.method)}</td>
@@ -283,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 支払い情報をリアルタイムで購読
                     if (paymentsUnsubscribe) paymentsUnsubscribe(); // 既存のリスナーを解除
                     paymentsUnsubscribe = db.collection('events').doc(eventId).collection('payments')
-                        .orderBy('createdAt', 'desc')
+                        .orderBy('createdAt', 'asc')
                         .onSnapshot(snapshot => {
                             const payments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                             renderPayments(payments);
