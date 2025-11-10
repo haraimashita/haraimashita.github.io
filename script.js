@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         db.collection('events').doc(currentEventId).collection('payments').add(newPayment)
             .then(() => {
                 addPaymentForm.reset();
+                alert('支払いを記録しました！'); // ポップアップを追加
             })
             .catch(error => {
                 console.error("支払いの追加に失敗しました:", error);
