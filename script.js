@@ -1,4 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- パス復元処理 ---
+    // 404.htmlからリダイレクトされた場合に、URLを復元する
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        const redirectPath = params.get('p');
+        if (redirectPath) {
+            const newPath = decodeURIComponent(redirectPath);
+            const newSearch = params.get('q') ? decodeURIComponent(params.get('q')) : '';
+            // URLを書き換え、履歴に残さない
+            window.history.replaceState(null, '', newPath + newSearch + window.location.hash);
+        }
+    })();
+
     // --- Firebaseの初期化 ---
     const firebaseConfig = {
         apiKey: "AIzaSyB3NwVo4M2l-yRyIcJSjZGRs3tB6exITng",
@@ -41,7 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- イベントリスナー ---
     const backToHome = () => {
-        window.open(window.location.pathname, '_blank');
+        // 新しいイベント作成のために、ルートパスで新しいタブを開く
+        window.open(window.location.origin, '_blank');
     };
 
     createAnotherEventBtn.addEventListener('click', backToHome);
@@ -61,7 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const docRef = await db.collection('events').add(eventData);
-            const url = `${window.location.origin}${window.location.pathname}#${docRef.id}`;
+            // 生成するURLをハッシュなしの "きれいなURL" に変更
+            const url = `${window.location.origin}/${docRef.id}`;
             shareUrlInput.value = url;
             showScreen('share-screen');
         } catch (error) {
@@ -262,7 +277,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 初期化処理 (Firebase対応) ---
     const init = () => {
-        const eventId = window.location.hash.substring(1);
+        // URLのパスからイベントIDを取得 (例: /event123 -> event123)
+        const pathSegments = window.location.pathname.split('/').filter(Boolean);
+        const eventIdFromPath = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
+        
+        // URLのハッシュからイベントIDを取得 (後方互換性のため)
+        const eventIdFromHash = window.location.hash.substring(1);
+
+        // パスからのIDを優先し、なければハッシュのIDを使用
+        const eventId = eventIdFromPath || eventIdFromHash;
+
         if (eventId) {
             currentEventId = eventId;
             
