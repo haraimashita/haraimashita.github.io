@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- パス復元処理 ---
     // 404.htmlからリダイレクトされた場合に、URLを復元する
-    (function () {
+    (function() {
         const params = new URLSearchParams(window.location.search);
         const redirectPath = params.get('p');
         if (redirectPath) {
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const createNewEventFromDetailsBtn = document.getElementById('create-new-event-from-details');
     const addPaymentForm = document.getElementById('add-payment-form');
     const paymentsTbody = document.getElementById('payments-tbody');
-
+    
     // 編集モーダル関連
     const editModal = document.getElementById('edit-modal');
     const editPaymentForm = document.getElementById('edit-payment-form');
@@ -72,11 +72,11 @@ document.addEventListener('DOMContentLoaded', () => {
             comment: document.getElementById('event-comment').value,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-
+        
         try {
             const docRef = await db.collection('events').add(eventData);
-            // 生成するURLをクエリパラメータ形式に変更 (ローカル/静的ホスティング対応)
-            const url = `${window.location.origin}${window.location.pathname}?id=${docRef.id}`;
+            // 生成するURLをハッシュなしの "きれいなURL" に変更
+            const url = `${window.location.origin}/${docRef.id}`;
             shareUrlInput.value = url;
             showScreen('share-screen');
         } catch (error) {
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
             comment: document.getElementById('payment-comment').value,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-
+        
         db.collection('events').doc(currentEventId).collection('payments').add(newPayment)
             .then(() => {
                 addPaymentForm.reset();
@@ -176,20 +176,20 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(doc => {
                 if (!doc.exists) return;
                 const payment = doc.data();
-
+                
                 editPaymentId.value = doc.id;
                 document.getElementById('edit-participant-name').value = payment.name;
                 document.getElementById('edit-payment-amount').value = payment.amount;
                 document.getElementById('edit-payment-method').value = payment.method;
                 document.getElementById('edit-payment-comment').value = payment.comment;
-
+                
                 editModal.style.display = 'block';
             });
     };
 
     const deletePayment = (paymentId) => {
         if (!confirm('この支払いを削除しますか？')) return;
-
+        
         db.collection('events').doc(currentEventId).collection('payments').doc(paymentId).delete()
             .catch(error => {
                 console.error("支払いの削除に失敗しました:", error);
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderPaymentMethodTotals = (payments) => {
         const totalsByMethodCard = document.getElementById('totals-by-method-card');
         const totalsTable = document.getElementById('totals-by-method-table');
-
+        
         if (payments.length === 0) {
             totalsByMethodCard.style.display = 'none';
             return;
@@ -266,37 +266,37 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             totalsTable.innerHTML += row;
         }
-
+        
         totalsByMethodCard.style.display = 'block';
     };
-
+    
     const escapeHTML = (str) => {
         if (!str) return '';
-        return str.replace(/[&<>"']/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[match]);
+        return str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]);
     };
 
     // --- 初期化処理 (Firebase対応) ---
     const init = () => {
-        // URLのクエリパラメータからイベントIDを取得 (推奨)
-        const params = new URLSearchParams(window.location.search);
-        const eventIdFromQuery = params.get('id');
-
+        // URLのパスからイベントIDを取得 (例: /event123 -> event123)
+        const pathSegments = window.location.pathname.split('/').filter(Boolean);
+        const eventIdFromPath = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
+        
         // URLのハッシュからイベントIDを取得 (後方互換性のため)
         const eventIdFromHash = window.location.hash.substring(1);
 
-        // クエリパラメータからのIDを優先
-        const eventId = eventIdFromQuery || eventIdFromHash;
+        // パスからのIDを優先し、なければハッシュのIDを使用
+        const eventId = eventIdFromPath || eventIdFromHash;
 
         if (eventId) {
             currentEventId = eventId;
-
+            
             // イベントデータを取得
             db.collection('events').doc(eventId).get().then(doc => {
                 if (doc.exists) {
                     currentEventData = doc.data();
                     document.getElementById('event-title-display').textContent = currentEventData.title;
                     document.getElementById('event-date-display').textContent = `開催日: ${currentEventData.date}`;
-
+                    
                     const commentDisplay = document.getElementById('event-comment-display');
                     if (currentEventData.comment) {
                         commentDisplay.textContent = currentEventData.comment;
