@@ -1,16 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-1ZFPY6456X"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
-  gtag('config', 'G-1ZFPY6456X');
-</script>
-    
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ハライマシタ</title>
@@ -20,15 +11,48 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="container">
         <!-- イベント作成画面 -->
         <div id="create-event-screen" class="screen">
             <header>
-                <svg class="app-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="20" fill="#28a745"/><polyline points="25,50 45,70 75,30" fill="none" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg class="app-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100" height="100" rx="20" fill="#28a745" />
+                    <polyline points="25,50 45,70 75,30" fill="none" stroke="white" stroke-width="12"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
                 <h1>ハライマシタ</h1>
                 <p>ハライマシタはURLをメンバーに送るだけで、「誰が」「どうやって」「いくら」払ったかを見える化できるツールです</p>
             </header>
+
+            <!-- Flow Section Added -->
+            <section class="flow-section">
+                <div class="flow-step">
+                    <div class="flow-icon-wrapper">
+                        <img src="flow_step1.png" alt="入力" class="flow-icon">
+                    </div>
+                    <h3>1. 入力</h3>
+                    <p>イベント情報を作成</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-icon-wrapper">
+                        <img src="flow_step2.png" alt="共有" class="flow-icon">
+                    </div>
+                    <h3>2. 共有</h3>
+                    <p>リンクをメンバーに送る</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-icon-wrapper">
+                        <img src="flow_step3.png" alt="支払い" class="flow-icon">
+                    </div>
+                    <h3>3. 完了</h3>
+                    <p>支払いを記録して見える化</p>
+                </div>
+            </section>
+            <!-- End Flow Section -->
             <main>
                 <form id="create-event-form">
                     <h2>イベント作成</h2>
@@ -62,7 +86,11 @@
         <!-- 共有リンク画面 -->
         <div id="share-screen" class="screen">
             <header>
-                <svg class="app-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="20" fill="#28a745"/><polyline points="25,50 45,70 75,30" fill="none" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg class="app-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100" height="100" rx="20" fill="#28a745" />
+                    <polyline points="25,50 45,70 75,30" fill="none" stroke="white" stroke-width="12"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
                 <h2>共有リンクが作成されました</h2>
             </header>
             <main>
@@ -82,7 +110,11 @@
         <div id="event-details-screen" class="screen">
             <header>
                 <div class="header-main">
-                    <svg class="app-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="20" fill="#28a745"/><polyline points="25,50 45,70 75,30" fill="none" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <svg class="app-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100" height="100" rx="20" fill="#28a745" />
+                        <polyline points="25,50 45,70 75,30" fill="none" stroke="white" stroke-width="12"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
                     <span class="app-title">ハライマシタ</span>
                 </div>
                 <h2 id="event-title-display"></h2>
@@ -215,4 +247,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>
